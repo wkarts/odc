@@ -164,9 +164,7 @@ pub fn create_from_file(
 
     if compress && should_gzip(&mime, raw.len()) {
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-        encoder
-            .write_all(&raw)
-            .map_err(|error| error.to_string())?;
+        encoder.write_all(&raw).map_err(|error| error.to_string())?;
         let compressed = encoder.finish().map_err(|error| error.to_string())?;
 
         if compressed.len() + 64 < raw.len() {
@@ -235,14 +233,12 @@ pub fn info_file(path: &Path) -> Result<OdcInfo, String> {
         one(&data, &chunks, MIME, 1 << 20, true)?.expect("chunk obrigatório validado"),
     )
     .into_owned();
-    let original_size = le64(
-        one(&data, &chunks, ORIGINAL_SIZE, 8, true)?.expect("chunk obrigatório validado"),
-    );
-    let compression = one(&data, &chunks, COMPRESSION, 1, true)?
-        .expect("chunk obrigatório validado")[0];
-    let sha256 = hex::encode(
-        one(&data, &chunks, SHA256, 32, true)?.expect("chunk obrigatório validado"),
-    );
+    let original_size =
+        le64(one(&data, &chunks, ORIGINAL_SIZE, 8, true)?.expect("chunk obrigatório validado"));
+    let compression =
+        one(&data, &chunks, COMPRESSION, 1, true)?.expect("chunk obrigatório validado")[0];
+    let sha256 =
+        hex::encode(one(&data, &chunks, SHA256, 32, true)?.expect("chunk obrigatório validado"));
     let payload = chunks
         .iter()
         .find(|chunk| chunk.chunk_type == PAYLOAD)
@@ -280,8 +276,8 @@ pub fn extract(path: &Path, output: &Path) -> Result<(), String> {
         .ok_or("PAYLOAD ausente")?;
     let start = payload.data_offset as usize;
     let packed = &data[start..start + payload.length as usize];
-    let compression = one(&data, &chunks, COMPRESSION, 1, true)?
-        .expect("chunk obrigatório validado")[0];
+    let compression =
+        one(&data, &chunks, COMPRESSION, 1, true)?.expect("chunk obrigatório validado")[0];
 
     let raw = match compression {
         0 => packed.to_vec(),
@@ -296,15 +292,13 @@ pub fn extract(path: &Path, output: &Path) -> Result<(), String> {
         _ => return Err("compressão não suportada".into()),
     };
 
-    let expected_size = le64(
-        one(&data, &chunks, ORIGINAL_SIZE, 8, true)?.expect("chunk obrigatório validado"),
-    );
+    let expected_size =
+        le64(one(&data, &chunks, ORIGINAL_SIZE, 8, true)?.expect("chunk obrigatório validado"));
     if raw.len() as u64 != expected_size {
         return Err("tamanho divergente".into());
     }
 
-    let expected_hash =
-        one(&data, &chunks, SHA256, 32, true)?.expect("chunk obrigatório validado");
+    let expected_hash = one(&data, &chunks, SHA256, 32, true)?.expect("chunk obrigatório validado");
     let actual_hash = Sha256::digest(&raw);
     if expected_hash != &actual_hash[..] {
         return Err("SHA-256 inválido".into());

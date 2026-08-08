@@ -45,12 +45,7 @@ fn run(args: &[String]) -> Result<(), String> {
         "create" => {
             let output = argument(args, 3, "saida.odc")?;
             let metadata = args.get(4).map(|path| read_metadata(path)).transpose()?;
-            create_from_file(
-                Path::new(input),
-                Path::new(output),
-                metadata.as_ref(),
-                true,
-            )
+            create_from_file(Path::new(input), Path::new(output), metadata.as_ref(), true)
         }
         "set-meta" => {
             let metadata_path = argument(args, 3, "metadata.json")?;
