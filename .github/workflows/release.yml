@@ -1,0 +1,83 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag existente ou a criar (ex. v1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: v
+        shell: bash
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          [[ "$TAG" == "v$VERSION" ]] || { echo "Tag $TAG difere de VERSION v$VERSION" >&2; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - run: bash scripts/ci/check-version.sh
+
+  build:
+    needs: version
+    uses: ./.github/workflows/build-assets.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
+  publish:
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: false
+      - run: bash scripts/release/collect-artifacts.sh artifacts release-assets
+      - run: bash scripts/release/make-manifest.sh release-assets
+      - run: bash scripts/release/checksums.sh release-assets
+      - name: Validar nomes e hashes
+        run: |
+          test -s release-assets/SHA256SUMS.txt
+          test -s release-assets/release-manifest.json
+          (cd release-assets && sha256sum -c SHA256SUMS.txt)
+      - name: Garantir tag no dispatch manual
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "ODC SDK $VERSION"
+            git push origin "$TAG"
+          fi
+      - name: Criar/atualizar GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-assets/* --clobber
+          else
+            gh release create "$TAG" release-assets/* --title "ODC SDK $VERSION" --generate-notes --verify-tag
+          fi

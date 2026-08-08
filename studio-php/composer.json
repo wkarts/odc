@@ -1,0 +1,9 @@
+{
+  "name": "odc/studio-php",
+  "description": "ODC Studio PHP - interface web local para Optical Data Container",
+  "type": "project",
+  "require": {
+    "php": ">=8.1"
+  },
+  "license": "MIT"
+}

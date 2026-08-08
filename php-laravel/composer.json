@@ -1,0 +1,8 @@
+{
+  "name": "argws/odc",
+  "description": "ODC 1.0 reference implementation for PHP/Laravel",
+  "type": "library",
+  "autoload": {"psr-4": {"Odc\\": "src/"}},
+  "require": {"php": ">=8.1", "ext-fileinfo": "*", "ext-zlib": "*", "ext-json": "*"},
+  "bin": ["bin/odc"]
+}

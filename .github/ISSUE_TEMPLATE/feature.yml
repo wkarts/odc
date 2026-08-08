@@ -1,0 +1,10 @@
+name: Evolução
+about: Propor evolução compatível do ODC
+body:
+  - type: textarea
+    id: proposal
+    attributes: { label: Proposta }
+    validations: { required: true }
+  - type: textarea
+    id: compatibility
+    attributes: { label: Impacto de compatibilidade }

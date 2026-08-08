@@ -1,0 +1,70 @@
+{
+    "magic": "ODC1",
+    "version": "1.0",
+    "flags": 0,
+    "chunk_count": 7,
+    "file_name": "hello.txt",
+    "mime_type": "text/plain",
+    "original_size": 176,
+    "stored_payload_size": 176,
+    "compression": "none",
+    "sha256": "147a45ae779bb9e6a89e0dc67cb8937a21f0cad88117627630cb396187316bdf",
+    "metadata": {
+        "empresa_id": 1,
+        "filial_id": 1,
+        "registro_id": 123,
+        "origem": "test-vector",
+        "descricao": "TXT integrado ao ODC"
+    },
+    "chunks": [
+        {
+            "type": "0x0001",
+            "name": "FILE_NAME",
+            "flags": 0,
+            "length": 9,
+            "offset": 36
+        },
+        {
+            "type": "0x0002",
+            "name": "MIME_TYPE",
+            "flags": 0,
+            "length": 10,
+            "offset": 57
+        },
+        {
+            "type": "0x0003",
+            "name": "METADATA_JSON",
+            "flags": 0,
+            "length": 106,
+            "offset": 79
+        },
+        {
+            "type": "0x0004",
+            "name": "ORIGINAL_SIZE",
+            "flags": 0,
+            "length": 8,
+            "offset": 197
+        },
+        {
+            "type": "0x0010",
+            "name": "COMPRESSION",
+            "flags": 0,
+            "length": 1,
+            "offset": 217
+        },
+        {
+            "type": "0x0020",
+            "name": "SHA256",
+            "flags": 0,
+            "length": 32,
+            "offset": 230
+        },
+        {
+            "type": "0x0100",
+            "name": "PAYLOAD",
+            "flags": 0,
+            "length": 176,
+            "offset": 274
+        }
+    ]
+}

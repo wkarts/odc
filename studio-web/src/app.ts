@@ -1,0 +1,12 @@
+import { createOdc, infoOdc, extractOdc, verifyOdc, setMetadata } from './odc.js';
+const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
+let current:Uint8Array|null=null; let currentName='arquivo.odc';
+const download=(bytes:Uint8Array,name:string,type='application/octet-stream')=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes as BlobPart],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+const fileBytes=async(input:HTMLInputElement)=>{const f=input.files?.[0];if(!f)throw new Error('Selecione um arquivo.');return {file:f,bytes:new Uint8Array(await f.arrayBuffer())}};
+$('create').onclick=async()=>{try{const {file,bytes}=await fileBytes($<HTMLInputElement>('src'));const txt=$<HTMLTextAreaElement>('meta').value.trim();const meta=txt?JSON.parse(txt):null;const out=await createOdc(file.name,file.type||'application/octet-stream',bytes,meta,$<HTMLInputElement>('compress').checked);download(out,file.name+'.odc','application/octet-stream')}catch(e){alert(String(e))}};
+$('odc').addEventListener('change',async()=>{try{const {file,bytes}=await fileBytes($<HTMLInputElement>('odc'));current=bytes;currentName=file.name;const i=await infoOdc(bytes);$<HTMLTextAreaElement>('editmeta').value=JSON.stringify(i.metadata??{},null,2)}catch(e){alert(String(e))}});
+$('inspect').onclick=async()=>{try{if(!current)throw new Error('Abra um ODC.');$('info').textContent=JSON.stringify(await infoOdc(current),null,2)}catch(e){alert(String(e))}};
+$('verify').onclick=async()=>{if(!current)return alert('Abra um ODC.');alert(await verifyOdc(current)?'Arquivo íntegro.':'Arquivo inválido.')};
+$('extract').onclick=async()=>{try{if(!current)throw new Error('Abra um ODC.');const i=await infoOdc(current);download(await extractOdc(current),i.fileName,i.mimeType)}catch(e){alert(String(e))}};
+$('saveMeta').onclick=async()=>{try{if(!current)throw new Error('Abra um ODC.');const meta=JSON.parse($<HTMLTextAreaElement>('editmeta').value||'{}');current=await setMetadata(current,meta);download(current,currentName)}catch(e){alert(String(e))}};
+$('removeMeta').onclick=async()=>{try{if(!current)throw new Error('Abra um ODC.');current=await setMetadata(current,null);$<HTMLTextAreaElement>('editmeta').value='{}';download(current,currentName)}catch(e){alert(String(e))}};

@@ -1,0 +1,43 @@
+name: Delphi self-hosted build
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag da release para anexar (ex. v1.0.0)
+        required: false
+        type: string
+      attach_to_release:
+        description: Anexar à GitHub Release existente
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: [self-hosted, Windows, X64, delphi]
+    steps:
+      - uses: actions/checkout@v6
+      - shell: powershell
+        run: |
+          $version=(Get-Content VERSION).Trim(); New-Item -ItemType Directory -Force dist\delphi\win32,dist\delphi\win64,dist\delphi\win32\dcu,dist\delphi\win64\dcu|Out-Null
+          dcc32 -B -Q -E"$pwd\dist\delphi\win32" -N0"$pwd\dist\delphi\win32\dcu" -I"$pwd\delphi" -U"$pwd\delphi" "$pwd\delphi\OdcCli.dpr"
+          dcc32 -B -Q -E"$pwd\dist\delphi\win32" -N0"$pwd\dist\delphi\win32\dcu" -I"$pwd\delphi" -U"$pwd\delphi" "$pwd\delphi\studio\OdcStudio.dpr"
+          dcc64 -B -Q -E"$pwd\dist\delphi\win64" -N0"$pwd\dist\delphi\win64\dcu" -I"$pwd\delphi" -U"$pwd\delphi" "$pwd\delphi\OdcCli.dpr"
+          dcc64 -B -Q -E"$pwd\dist\delphi\win64" -N0"$pwd\dist\delphi\win64\dcu" -I"$pwd\delphi" -U"$pwd\delphi" "$pwd\delphi\studio\OdcStudio.dpr"
+          Compress-Archive dist\delphi\win32\*.exe "dist\delphi\odc-delphi-$version-windows-x86.zip"
+          Compress-Archive dist\delphi\win64\*.exe "dist\delphi\odc-delphi-$version-windows-x64.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-delphi
+          path: dist/delphi/*.zip
+          if-no-files-found: error
+          retention-days: 7
+      - name: Anexar à release
+        if: ${{ inputs.attach_to_release && inputs.tag != '' }}
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" dist/delphi/*.zip --clobber

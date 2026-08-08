@@ -1,0 +1,13 @@
+{
+  "name": "@argws/odc-studio-web",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-core": "node ./sync-core.mjs",
+    "build": "npm run sync-core && tsc -p tsconfig.json && node ./copy-static.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
