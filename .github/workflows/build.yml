@@ -1,4 +1,5 @@
-name: Build artifacts
+name: Build & Release
+
 on:
   workflow_dispatch:
   push:
@@ -14,25 +15,84 @@ on:
       - 'powershell/**'
       - 'shell/**'
       - 'studio-web/**'
+      - 'studio-php/**'
+      - 'studio-html-js/**'
       - 'scripts/**'
       - '.github/workflows/build*.yml'
+      - '.github/workflows/release.yml'
       - 'VERSION'
 
 permissions:
   contents: read
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   version:
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
     steps:
       - uses: actions/checkout@v6
       - id: v
-        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          TAG="v${VERSION}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Validar contrato de versão
+        run: bash scripts/ci/check-version.sh
+      - name: Validar sincronismo de versões
+        run: python3 scripts/ci/check-version-sync.py
+      - name: Validar árvore do projeto
+        run: bash scripts/ci/validate-tree.sh
 
   build:
     needs: version
     uses: ./.github/workflows/build-assets.yml
     with:
       version: ${{ needs.version.outputs.version }}
+
+  publish:
+    name: Publicar tag e GitHub Release
+    if: github.ref == 'refs/heads/main'
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Baixar todos os artefatos aprovados
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: false
+      - name: Consolidar artefatos
+        run: bash scripts/release/collect-artifacts.sh artifacts release-assets
+      - name: Gerar manifesto
+        run: bash scripts/release/make-manifest.sh release-assets
+      - name: Gerar checksums
+        run: bash scripts/release/checksums.sh release-assets
+      - name: Validar release antes de publicar
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s release-assets/SHA256SUMS.txt
+          test -s release-assets/release-manifest.json
+          (cd release-assets && sha256sum -c SHA256SUMS.txt)
+      - name: Criar tag e publicar GitHub Release
+        shell: bash
+        run: bash scripts/release/publish-release.sh "$TAG" "$VERSION" release-assets auto

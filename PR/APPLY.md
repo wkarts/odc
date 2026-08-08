@@ -1,15 +1,31 @@
-# Aplicação sugerida
+# Aplicação
+
+Branch:
+
+```text
+fix/tauri-native-file-dialogs-and-release
+```
+
+Título:
+
+```text
+fix(studio,release): adicionar diálogos nativos e publicar tag/release após build
+```
+
+Aplicação do projeto completo:
 
 ```bash
 git checkout main
 git pull --ff-only
-git checkout -b feat/professional-studios-and-tauri-ui
+git checkout -b fix/tauri-native-file-dialogs-and-release
 
-# substitua o conteúdo do repositório pelos arquivos deste pacote
+# copie o conteúdo do pacote sobre a raiz do repositório
 
-git add -A
-git commit -m "feat(studio): profissionalizar interfaces, ícones e binário Tauri"
-git push -u origin feat/professional-studios-and-tauri-ui
+git add .
+git commit -m "fix(studio,release): adicionar diálogos nativos e publicar tag/release após build"
+git push -u origin fix/tauri-native-file-dialogs-and-release
 ```
 
-Abra o PR para `main` usando `PR/TITLE.txt` e `PR/DESCRIPTION.md`.
+Abra PR para `main`.
+
+Após o merge, o workflow `Build & Release` deve compilar toda a matriz e, se tudo estiver verde, criar automaticamente `v1.1.0` e a GitHub Release `ODC SDK 1.1.0`.

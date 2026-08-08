@@ -1,1 +1,1 @@
-feat(studio): profissionalizar interfaces, ícones e binário Tauri
+fix(studio,release): adicionar diálogos nativos e publicar tag/release após build
