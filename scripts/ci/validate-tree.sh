@@ -5,6 +5,8 @@ required=(
   php-laravel/src/OdcContainer.php
   delphi/OdcContainer.pas
   rust-tauri/src/lib.rs
+  rust-tauri/studio/src-tauri/Cargo.toml
+  rust-tauri/studio/src-tauri/src/main.rs
   nodejs/src/odc.js
   csharp-dotnet/Odc/OdcContainer.cs
   golang/odc/odc.go
@@ -13,6 +15,7 @@ required=(
   powershell/Odc.Core.ps1
   test-vectors/hello.odc
   scripts/ci/ensure-tauri-icons.py
+  scripts/release/publish-release.sh
   assets/icons/png/icon.png
   assets/icons/windows/icon.ico
   rust-tauri/studio/src-tauri/icons/icon.png
