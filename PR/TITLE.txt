@@ -1,1 +1,1 @@
-fix(build): materializar ícones obrigatórios do Tauri Studio no CI
+feat(studio): profissionalizar interfaces, ícones e binário Tauri

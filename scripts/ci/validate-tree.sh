@@ -13,6 +13,10 @@ required=(
   powershell/Odc.Core.ps1
   test-vectors/hello.odc
   scripts/ci/ensure-tauri-icons.py
+  assets/icons/png/icon.png
+  assets/icons/windows/icon.ico
+  rust-tauri/studio/src-tauri/icons/icon.png
+  rust-tauri/studio/src-tauri/icons/icon.ico
 )
 for f in "${required[@]}"; do
   [[ -f "$f" ]] || { echo "Arquivo obrigatório ausente: $f" >&2; exit 1; }

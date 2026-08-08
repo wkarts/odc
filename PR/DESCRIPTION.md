@@ -1,53 +1,32 @@
-# Correção pós-merge — ODC Studio Tauri
+# ODC Studios — Professional UI e correções desktop
 
-## Problema
+## Objetivo
 
-A matriz Tauri falha em Linux, macOS e Windows porque o checkout de `main`
-não contém os recursos esperados pelo Tauri:
+Profissionalizar todas as interfaces Studio existentes, corrigir a estrutura dos ícones e eliminar a janela de console do ODC Studio Tauri no Windows Release sem alterar o wire format ODC1.
 
-- `rust-tauri/studio/src-tauri/icons/icon.png`
-- `rust-tauri/studio/src-tauri/icons/icon.ico`
+## Entregas
 
-Linux/macOS falham no `tauri::generate_context!()` e Windows falha no
-`tauri-build` ao gerar o resource file.
+- estrutura canônica de ícones em `assets/icons/`;
+- ícones Tauri diretamente em `rust-tauri/studio/src-tauri/icons/`;
+- remoção do diretório intermediário `optional-prebuilt-icons/`;
+- `windows_subsystem = "windows"` no Tauri Release;
+- novo layout profissional no Studio HTML/JavaScript;
+- novo layout profissional no Studio Web/TypeScript;
+- novo layout profissional no Studio PHP;
+- novo layout profissional no Studio Tauri;
+- novo layout profissional no Studio .NET/WinForms;
+- novo layout profissional no Studio PowerShell/WinForms;
+- novo layout profissional no Studio Delphi/VCL;
+- pacote HTML/JS passa a incluir `assets/icon.png`;
+- validação de árvore passa a exigir os ícones canônicos.
 
-## Causa confirmada
+## Compatibilidade
 
-O workflow que falhou fez checkout do commit `2fc2945e65a41d6a6eb118d2bfe7db3bafda4d7c`.
-Nesse commit os dois arquivos de ícone não existem no repositório.
+- ODC1 permanece inalterado;
+- versão do SDK permanece 1.1.0;
+- operações create/info/verify/extract/set-meta/remove-meta preservadas;
+- nenhuma refatoração de codec ou mudança de payload.
 
-## Solução
+## Validação
 
-Adicionar `scripts/ci/ensure-tauri-icons.py`, que contém assets mínimos
-determinísticos embutidos e os materializa antes do `cargo build`.
-
-O script:
-
-- gera `icon.png` e `icon.ico` somente quando necessário;
-- valida SHA-256 dos bytes embutidos;
-- valida o arquivo final depois da escrita;
-- funciona em Linux, macOS e Windows;
-- remove a dependência de um commit binário separado para que a matriz Tauri
-  não volte a quebrar pelo mesmo motivo.
-
-O workflow passa a executar:
-
-```bash
-python scripts/ci/ensure-tauri-icons.py
-test -s rust-tauri/studio/src-tauri/icons/icon.png
-test -s rust-tauri/studio/src-tauri/icons/icon.ico
-cargo build --release --manifest-path rust-tauri/studio/src-tauri/Cargo.toml
-```
-
-## Escopo
-
-Não altera:
-
-- wire format ODC1;
-- versão ODC;
-- codec;
-- APIs;
-- Studio Web/PHP/.NET/PowerShell/Delphi;
-- regras de release.
-
-É uma correção estritamente de build do ODC Studio Tauri.
+Foram executados lint PHP, smoke HTTP do Studio PHP, Node checks, TypeScript build local, validação de workflows/YAML, contrato de versão e interoperabilidade PHP → Node.js → Go.

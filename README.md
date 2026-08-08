@@ -48,3 +48,9 @@ Consulte `docs/CI_CD_GITHUB.md`, `docs/RELEASE_ARTIFACTS.md`, `docs/LOCAL_BUILD.
 
 A compilação Delphi utiliza runner Windows self-hosted porque o toolchain Delphi é licenciado e não faz parte dos runners hospedados do GitHub. As demais famílias utilizam runners GitHub-hosted adequados a x64/arm64 e, onde suportado, x86.
 
+
+## Studios profissionais
+
+A distribuição inclui interfaces Studio alinhadas visualmente para HTML/JavaScript, Web/TypeScript, PHP, Tauri/Rust, .NET/WinForms, PowerShell/WinForms e Delphi/VCL. Os assets canônicos ficam em `assets/icons/`, e o Tauri mantém os arquivos exigidos pelo toolchain em `rust-tauri/studio/src-tauri/icons/`.
+
+No Windows Release, o ODC Studio Tauri é compilado como aplicação GUI (`windows_subsystem = "windows"`), sem janela CMD/console adicional.

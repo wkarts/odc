@@ -1,25 +1,15 @@
-# Aplicação
+# Aplicação sugerida
 
 ```bash
 git checkout main
 git pull --ff-only
+git checkout -b feat/professional-studios-and-tauri-ui
 
-git checkout -b fix/tauri-studio-icons-self-healing
+# substitua o conteúdo do repositório pelos arquivos deste pacote
 
-# Copie os arquivos deste pacote mantendo os caminhos:
-# .github/workflows/build-assets.yml
-# scripts/ci/ensure-tauri-icons.py
-# scripts/ci/validate-tree.sh
-
-python scripts/ci/ensure-tauri-icons.py --check
-
-git add \
-  .github/workflows/build-assets.yml \
-  scripts/ci/ensure-tauri-icons.py \
-  scripts/ci/validate-tree.sh
-
-git commit -m "fix(build): materializar ícones obrigatórios do Tauri Studio no CI"
-git push -u origin fix/tauri-studio-icons-self-healing
+git add -A
+git commit -m "feat(studio): profissionalizar interfaces, ícones e binário Tauri"
+git push -u origin feat/professional-studios-and-tauri-ui
 ```
 
-PR para `main`.
+Abra o PR para `main` usando `PR/TITLE.txt` e `PR/DESCRIPTION.md`.

@@ -1,3 +1,98 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ODC Studio HTML/JavaScript</title><link rel="stylesheet" href="style.css"></head><body><header><div><b>ODC Studio HTML/JavaScript</b><span>100% local · nenhum upload</span></div><span class="pill">ODC1</span></header><main><section class="hero"><h1>ODC Studio Offline</h1><p>Crie, abra, valide, visualize, extraia e edite metadata de containers ODC diretamente no navegador.</p></section><div id="notice" class="notice" hidden></div><nav><button data-tab="create" class="active">Criar</button><button data-tab="open">Abrir</button><button data-tab="preview">Preview</button><button data-tab="metadata">Metadata</button></nav><section id="create" class="tab active card"><h2>Criar ODC</h2><div class="cols"><label class="drop">Arquivo<input id="source" type="file"><small>O arquivo não sai do navegador.</small></label><div><label>Metadata JSON<textarea id="createMeta" rows="10">{
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>ODC Studio HTML/JavaScript</title>
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="assets/icon.png" alt="ODC">
+      <div><strong>ODC Studio</strong><span>HTML / JavaScript</span></div>
+    </div>
+    <nav class="nav-stack" aria-label="Ferramentas ODC">
+      <button data-tab="create" class="nav-item active"><span class="nav-icon">＋</span><span><b>Criar container</b><small>Arquivo → ODC</small></span></button>
+      <button data-tab="open" class="nav-item"><span class="nav-icon">⌁</span><span><b>Inspecionar</b><small>Header, chunks e hash</small></span></button>
+      <button data-tab="preview" class="nav-item"><span class="nav-icon">◫</span><span><b>Preview</b><small>Reconstrução local</small></span></button>
+      <button data-tab="metadata" class="nav-item"><span class="nav-icon">{ }</span><span><b>Metadata</b><small>Editar dados auxiliares</small></span></button>
+    </nav>
+    <div class="sidebar-card">
+      <span class="status-dot"></span>
+      <div><b>100% local</b><small>Nenhum arquivo é enviado para servidor.</small></div>
+    </div>
+    <div class="sidebar-footer"><span>ODC1</span><span>SDK 1.1.0</span></div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">Optical Data Container</p><h1 id="pageTitle">Criar container</h1></div>
+      <div class="topbar-actions"><span class="chip">Offline</span><span class="chip chip-strong">ODC1</span></div>
+    </header>
+
+    <main class="content">
+      <div id="notice" class="notice" hidden></div>
+
+      <section id="create" class="tab active">
+        <div class="intro-card">
+          <div><h2>Novo container ODC</h2><p>Empacote qualquer arquivo em formato binário ODC com metadata, SHA-256 e compressão adaptativa.</p></div>
+          <div class="intro-badge">Arquivo → <b>.odc</b></div>
+        </div>
+        <div class="grid-two">
+          <article class="card">
+            <div class="card-head"><div><span class="step">01</span><h3>Arquivo de origem</h3></div><span class="muted">qualquer formato</span></div>
+            <label class="drop-zone" for="source">
+              <span class="drop-symbol">⇧</span>
+              <b>Selecione o arquivo</b>
+              <small>O conteúdo permanece somente no navegador.</small>
+              <input id="source" type="file">
+            </label>
+            <div id="sourceName" class="file-state">Nenhum arquivo selecionado.</div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><span class="step">02</span><h3>Metadata e compactação</h3></div><span class="muted">opcional</span></div>
+            <label class="field-label" for="createMeta">Metadata JSON</label>
+            <textarea id="createMeta" rows="12" spellcheck="false">{
   "origem": "ODC Studio HTML/JS"
-}</textarea></label><label class="check"><input id="compress" type="checkbox" checked> Compressão adaptativa</label><button id="createBtn" class="primary">Criar e baixar</button></div></div></section><section id="open" class="tab card"><h2>Abrir / Inspecionar</h2><label class="drop">ODC<input id="odc" type="file" accept=".odc"><small>Processamento com Uint8Array/DataView/Web Crypto.</small></label><div class="actions"><button id="inspect" class="primary">Inspecionar</button><button id="verify">Validar SHA-256</button><button id="extract">Extrair original</button></div><div id="summary" class="summary"></div><div class="cols"><pre id="info">Selecione um arquivo.</pre><div class="table"><table><thead><tr><th>Tipo</th><th>Nome</th><th>Bytes</th><th>Offset</th></tr></thead><tbody id="chunks"></tbody></table></div></div></section><section id="preview" class="tab card"><h2>Preview do conteúdo</h2><div class="actions"><button id="previewBtn" class="primary">Gerar preview local</button></div><div id="previewArea" class="preview">Nenhum preview.</div></section><section id="metadata" class="tab card"><h2>Editar metadata</h2><textarea id="editMeta" rows="18">{}</textarea><div class="actions"><button id="saveMeta" class="primary">Salvar metadata e baixar novo ODC</button><button id="removeMeta" class="danger">Remover metadata</button></div></section></main><footer>ODC Studio HTML/JavaScript · offline-first · payload binário literal</footer><script type="module" src="app.js"></script></body></html>
+}</textarea>
+            <label class="toggle-row"><input id="compress" type="checkbox" checked><span><b>Compressão adaptativa</b><small>Aplica gzip somente quando houver ganho real.</small></span></label>
+            <button id="createBtn" class="btn primary wide">Criar e baixar ODC</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="open" class="tab">
+        <div class="intro-card"><div><h2>Inspeção técnica</h2><p>Leia o container sem extrair o payload e valide sua integridade criptográfica.</p></div><div class="intro-badge">Header + Chunks</div></div>
+        <article class="card">
+          <div class="toolbar-grid">
+            <label class="compact-file"><span>Arquivo ODC</span><input id="odc" type="file" accept=".odc,application/octet-stream"></label>
+            <div class="button-group"><button id="inspect" class="btn primary">Inspecionar</button><button id="verify" class="btn">Validar SHA-256</button><button id="extract" class="btn">Extrair original</button></div>
+          </div>
+          <div class="summary" id="summary"><div class="stat empty"><b>—</b><span>Versão</span></div><div class="stat empty"><b>—</b><span>Original</span></div><div class="stat empty"><b>—</b><span>Armazenado</span></div><div class="stat empty"><b>—</b><span>Compressão</span></div></div>
+        </article>
+        <div class="grid-two inspect-grid">
+          <article class="card"><div class="card-head"><h3>Informações</h3><span class="muted">JSON normalizado</span></div><pre id="info" class="code-panel">Selecione um arquivo ODC.</pre></article>
+          <article class="card"><div class="card-head"><h3>Mapa de chunks</h3><span class="muted">offset e tamanho</span></div><div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Nome</th><th>Tamanho</th><th>Offset</th></tr></thead><tbody id="chunks"><tr><td colspan="4" class="empty-row">Nenhum container carregado.</td></tr></tbody></table></div></article>
+        </div>
+      </section>
+
+      <section id="preview" class="tab">
+        <div class="intro-card"><div><h2>Preview reconstruído</h2><p>O Studio extrai o payload em memória e apresenta formatos compatíveis sem salvar cópias permanentes.</p></div><button id="previewBtn" class="btn primary">Gerar preview</button></div>
+        <article class="card preview-card"><div id="previewArea" class="preview-area"><div class="preview-empty"><span>◫</span><b>Nenhum preview</b><small>Abra um ODC e clique em “Gerar preview”.</small></div></div></article>
+      </section>
+
+      <section id="metadata" class="tab">
+        <div class="intro-card"><div><h2>Editor de metadata</h2><p>Atualize apenas os metadados e gere um novo container preservando o payload original.</p></div><span class="intro-badge">JSON</span></div>
+        <article class="card"><label class="field-label" for="editMeta">Metadata JSON</label><textarea id="editMeta" class="editor-large" rows="22" spellcheck="false">{}</textarea><div class="button-group align-end"><button id="saveMeta" class="btn primary">Salvar metadata e baixar</button><button id="removeMeta" class="btn danger">Remover metadata</button></div></article>
+      </section>
+    </main>
+    <footer class="statusbar"><span>ODC Studio HTML/JavaScript</span><span>Binário literal · SHA-256 · offline-first</span></footer>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ODC-Studio-DotNet</AssemblyName>
+    <ApplicationIcon>../../assets/icons/windows/icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Odc/Odc.csproj" />

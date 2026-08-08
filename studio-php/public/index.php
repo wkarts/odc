@@ -175,32 +175,55 @@ if (isset($_GET['api'])) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
 <title><?= STUDIO_NAME ?></title>
+<link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<header class="topbar"><div><strong>ODC Studio PHP</strong><span>Optical Data Container</span></div><div class="badge">ODC1 · PHP <?= htmlspecialchars(PHP_VERSION) ?></div></header>
-<main class="shell">
-<section class="hero"><div><h1>Crie, inspecione, valide e edite containers ODC</h1><p>Interface local PHP. Nenhum banco de dados é necessário. O conteúdo é processado apenas durante a requisição.</p></div><div class="hero-stat"><b><?= (int)(maxUploadBytes()/1024/1024) ?> MB</b><span>limite local</span></div></section>
-<div id="notice" class="notice" hidden></div>
-<nav class="tabs"><button data-tab="create" class="active">Criar ODC</button><button data-tab="open">Abrir / Inspecionar</button><button data-tab="metadata">Metadata</button><button data-tab="about">Sobre</button></nav>
-<section id="tab-create" class="panel tab active">
-  <h2>Criar container</h2>
-  <div class="grid two"><label class="drop"><span>Arquivo de origem</span><input id="sourceFile" type="file"><small>Qualquer tipo de arquivo.</small></label><div><label>Metadata JSON<textarea id="createMeta" rows="9">{\n  "origem": "ODC Studio PHP"\n}</textarea></label><label class="check"><input id="compress" type="checkbox" checked> Compressão adaptativa quando houver ganho real</label><button id="createBtn" class="primary">Criar e baixar .odc</button></div></div>
-</section>
-<section id="tab-open" class="panel tab">
-  <h2>Abrir container</h2>
-  <label class="drop"><span>Arquivo .odc</span><input id="odcFile" type="file" accept=".odc,application/octet-stream"><small>O arquivo permanece apenas na sessão da página e é reenviado ao PHP para cada operação.</small></label>
-  <div class="actions"><button id="inspectBtn" class="primary">Inspecionar</button><button id="verifyBtn">Validar SHA-256</button><button id="extractBtn">Extrair original</button></div>
-  <div class="cards" id="summary"></div>
-  <div class="split"><div><h3>Informações</h3><pre id="info">Selecione um ODC.</pre></div><div><h3>Chunks</h3><div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Nome</th><th>Tamanho</th><th>Offset</th></tr></thead><tbody id="chunks"></tbody></table></div></div></div>
-</section>
-<section id="tab-metadata" class="panel tab">
-  <h2>Editar metadata</h2><p class="muted">Use o mesmo ODC selecionado na aba “Abrir / Inspecionar”. A operação reescreve o container de forma segura e devolve um novo arquivo para download.</p>
-  <textarea id="editMeta" rows="16">{}</textarea><div class="actions"><button id="saveMetaBtn" class="primary">Salvar metadata e baixar</button><button id="removeMetaBtn" class="danger">Remover metadata e baixar</button></div>
-</section>
-<section id="tab-about" class="panel tab"><h2>ODC Studio PHP</h2><p>Operações suportadas: <code>create</code>, <code>info</code>, <code>verify</code>, <code>extract</code>, <code>set-meta</code> e <code>remove-meta</code>.</p><p>O payload permanece binário. Base64 não é usado pelo formato ODC.</p></section>
-</main>
-<footer>ODC Studio PHP · formato ODC1 · execução local/rede privada conforme sua implantação</footer>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><img src="assets/icon.png" alt="ODC"><div><strong>ODC Studio</strong><span>PHP <?= htmlspecialchars(PHP_VERSION) ?></span></div></div>
+    <nav class="nav-stack">
+      <button data-tab="create" class="nav-item active"><span class="nav-icon">＋</span><span><b>Criar container</b><small>Arquivo → ODC</small></span></button>
+      <button data-tab="open" class="nav-item"><span class="nav-icon">⌁</span><span><b>Inspecionar</b><small>Header, chunks e hash</small></span></button>
+      <button data-tab="preview" class="nav-item"><span class="nav-icon">◫</span><span><b>Preview</b><small>Conteúdo reconstruído</small></span></button>
+      <button data-tab="metadata" class="nav-item"><span class="nav-icon">{ }</span><span><b>Metadata</b><small>Editar dados auxiliares</small></span></button>
+      <button data-tab="about" class="nav-item"><span class="nav-icon">i</span><span><b>Sobre</b><small>Runtime e formato</small></span></button>
+    </nav>
+    <div class="sidebar-card"><span class="status-dot"></span><div><b>Processamento temporário</b><small>Sem banco de dados. Uploads são processados apenas durante a requisição.</small></div></div>
+    <div class="sidebar-footer"><span>ODC1</span><span><?= (int)(maxUploadBytes()/1024/1024) ?> MB</span></div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar"><div><p class="eyebrow">Optical Data Container</p><h1 id="pageTitle">Criar container</h1></div><div class="topbar-actions"><span class="chip">PHP <?= htmlspecialchars(PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION) ?></span><span class="chip chip-strong">ODC1</span></div></header>
+    <main class="content">
+      <div id="notice" class="notice" hidden></div>
+
+      <section id="tab-create" class="tab active">
+        <div class="intro-card"><div><h2>Novo container ODC</h2><p>Empacote qualquer arquivo com metadata, integridade SHA-256 e compressão adaptativa.</p></div><div class="intro-badge">Limite: <b><?= (int)(maxUploadBytes()/1024/1024) ?> MB</b></div></div>
+        <div class="grid-two">
+          <article class="card"><div class="card-head"><div><span class="step">01</span><h3>Arquivo de origem</h3></div><span class="muted">qualquer formato</span></div><label class="drop-zone" for="sourceFile"><span class="drop-symbol">⇧</span><b>Selecione o arquivo</b><small>Será usado somente nesta operação.</small><input id="sourceFile" type="file"></label><div id="sourceName" class="file-state">Nenhum arquivo selecionado.</div></article>
+          <article class="card"><div class="card-head"><div><span class="step">02</span><h3>Metadata e compactação</h3></div><span class="muted">opcional</span></div><label class="field-label">Metadata JSON</label><textarea id="createMeta" rows="12" spellcheck="false">{
+  "origem": "ODC Studio PHP"
+}</textarea><label class="toggle-row"><input id="compress" type="checkbox" checked><span><b>Compressão adaptativa</b><small>Gzip somente quando houver redução real.</small></span></label><button id="createBtn" class="btn primary wide">Criar e baixar ODC</button></article>
+        </div>
+      </section>
+
+      <section id="tab-open" class="tab">
+        <div class="intro-card"><div><h2>Inspeção técnica</h2><p>Analise a estrutura do container, chunks, tamanhos e integridade sem persistência adicional.</p></div><div class="intro-badge">Header + Chunks</div></div>
+        <article class="card"><div class="toolbar-grid"><label class="compact-file"><span>Arquivo ODC</span><input id="odcFile" type="file" accept=".odc,application/octet-stream"></label><div class="button-group"><button id="inspectBtn" class="btn primary">Inspecionar</button><button id="verifyBtn" class="btn">Validar SHA-256</button><button id="extractBtn" class="btn">Extrair original</button></div></div><div class="summary" id="summary"><div class="stat empty"><b>—</b><span>Versão</span></div><div class="stat empty"><b>—</b><span>Original</span></div><div class="stat empty"><b>—</b><span>Armazenado</span></div><div class="stat empty"><b>—</b><span>Compressão</span></div></div></article>
+        <div class="grid-two inspect-grid"><article class="card"><div class="card-head"><h3>Informações</h3><span class="muted">JSON normalizado</span></div><pre id="info" class="code-panel">Selecione um arquivo ODC.</pre></article><article class="card"><div class="card-head"><h3>Mapa de chunks</h3><span class="muted">offset e tamanho</span></div><div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Nome</th><th>Tamanho</th><th>Offset</th></tr></thead><tbody id="chunks"><tr><td colspan="4" class="empty-row">Nenhum container carregado.</td></tr></tbody></table></div></article></div>
+      </section>
+
+      <section id="tab-preview" class="tab"><div class="intro-card"><div><h2>Preview do conteúdo</h2><p>Reconstrói o payload temporariamente e o apresenta no navegador quando o MIME for compatível.</p></div><button id="previewBtn" class="btn primary">Gerar preview</button></div><article class="card preview-card"><div id="previewArea" class="preview-area"><div class="preview-empty"><span>◫</span><b>Nenhum preview</b><small>Selecione um ODC na aba de inspeção.</small></div></div></article></section>
+
+      <section id="tab-metadata" class="tab"><div class="intro-card"><div><h2>Editor de metadata</h2><p>Reescreva os metadados preservando o payload e gere um novo ODC.</p></div><span class="intro-badge">JSON</span></div><article class="card"><label class="field-label">Metadata JSON</label><textarea id="editMeta" class="editor-large" rows="22" spellcheck="false">{}</textarea><div class="button-group align-end"><button id="saveMetaBtn" class="btn primary">Salvar metadata e baixar</button><button id="removeMetaBtn" class="btn danger">Remover metadata</button></div></article></section>
+
+      <section id="tab-about" class="tab"><div class="intro-card"><div><h2>ODC Studio PHP</h2><p>Interface operacional para o formato ODC1 usando a implementação oficial PHP/Laravel.</p></div><span class="intro-badge">SDK 1.1.0</span></div><div class="grid-two"><article class="card"><h3>Operações</h3><ul class="clean-list"><li>Criar containers de qualquer arquivo</li><li>Inspecionar header e chunks</li><li>Validar SHA-256</li><li>Extrair payload original</li><li>Editar ou remover metadata</li></ul></article><article class="card"><h3>Privacidade</h3><ul class="clean-list"><li>Sem banco de dados obrigatório</li><li>Payload binário literal, sem Base64</li><li>Arquivos temporários descartados ao fim da operação</li><li>Cache HTTP desabilitado nas respostas de API</li></ul></article></div></section>
+    </main>
+    <footer class="statusbar"><span>ODC Studio PHP</span><span>ODC1 · SHA-256 · compactação adaptativa</span></footer>
+  </div>
+</div>
 <script src="assets/app.js"></script>
 </body></html>
