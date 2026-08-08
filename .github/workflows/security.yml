@@ -25,7 +25,7 @@ jobs:
 
       # Toolchains precisam ser instalados antes do CodeQL init em build-mode manual.
       # No caso de Go, o init injeta o wrapper de tracing sobre o `go` já instalado.
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         if: matrix.language == 'csharp'
         with: { dotnet-version: '8.0.x' }
 
