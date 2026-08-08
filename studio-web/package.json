@@ -8,6 +8,6 @@
     "build": "npm run sync-core && tsc -p tsconfig.json && node ./copy-static.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "typescript": "^7.0.2"
   }
 }
