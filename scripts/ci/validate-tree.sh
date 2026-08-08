@@ -12,6 +12,7 @@ required=(
   shell/odc.sh
   powershell/Odc.Core.ps1
   test-vectors/hello.odc
+  scripts/ci/ensure-tauri-icons.py
 )
 for f in "${required[@]}"; do
   [[ -f "$f" ]] || { echo "Arquivo obrigatório ausente: $f" >&2; exit 1; }

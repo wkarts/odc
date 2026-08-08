@@ -1,0 +1,1 @@
+fix/tauri-studio-icons-self-healing
