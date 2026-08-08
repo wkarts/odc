@@ -1,0 +1,156 @@
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: bash scripts/ci/check-version.sh
+      - run: python3 scripts/ci/check-version-sync.py
+      - run: bash scripts/ci/validate-tree.sh
+      - name: Validar YAML dos workflows
+        run: ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |f| YAML.load_file(f); puts "OK #{f}" }'
+
+  php:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: PHP
+        run: php -v
+      - name: Lint
+        run: find php-laravel -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Smoke
+        run: |
+          mkdir -p /tmp/odc-php
+          php php-laravel/bin/odc create test-vectors/hello.txt /tmp/odc-php/hello.odc test-vectors/hello.metadata.json
+          php php-laravel/bin/odc verify /tmp/odc-php/hello.odc
+          php php-laravel/bin/odc extract /tmp/odc-php/hello.odc /tmp/odc-php/hello.txt
+          cmp test-vectors/hello.txt /tmp/odc-php/hello.txt
+
+  node:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - run: node --check nodejs/src/odc.js
+      - run: node --check nodejs/bin/odc.js
+      - run: node nodejs/bin/odc.js verify test-vectors/hello.odc
+
+  typescript:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - working-directory: typescript
+        run: npm install --no-audit --no-fund && npm run build
+      - working-directory: studio-web
+        run: npm install --no-audit --no-fund && npm run build
+
+  go:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: golang/go.mod
+          cache-dependency-path: golang/go.mod
+      - working-directory: golang
+        run: |
+          gofmt -w odc cmd
+          git diff --exit-code
+          go vet ./...
+          go test ./...
+          go build ./cmd/odc
+      - run: go -C golang run ./cmd/odc verify ../test-vectors/hello.odc
+
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup toolchain install stable --profile minimal --no-self-update
+      - run: rustup component add rustfmt clippy
+      - working-directory: rust-tauri
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+          cargo build --release --bin odc
+
+  dotnet:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with: { dotnet-version: '8.0.x' }
+      - run: dotnet build csharp-dotnet/Odc.Cli/Odc.Cli.csproj -c Release
+      - run: dotnet build csharp-dotnet/Odc.Studio/Odc.Studio.csproj -c Release
+      - run: dotnet run --project csharp-dotnet/Odc.Cli/Odc.Cli.csproj -- verify test-vectors/hello.odc
+
+  shell:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: bash -n shell/odc.sh
+      - run: bash shell/odc.sh info test-vectors/hello.odc >/tmp/odc-shell-info.txt
+
+  powershell:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v6
+      - shell: powershell
+        run: |
+          $errors=$null; [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path powershell/Odc.Core.ps1),[ref]$null,[ref]$errors); if($errors){$errors|Out-String|Write-Error;exit 1}
+          . .\powershell\Odc.Core.ps1
+          if(-not (Test-OdcFile '.\test-vectors\hello.odc')){throw 'Falha no vetor canônico'}
+
+  interop:
+    needs: [php, node, go]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: golang/go.mod
+          cache-dependency-path: golang/go.mod
+      - run: bash scripts/ci/cross-language-smoke.sh
+  studios:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - name: Validar Studio PHP
+        run: |
+          php -l studio-php/public/index.php
+          php -l php-laravel/src/OdcContainer.php
+      - name: Validar Studio HTML/JavaScript
+        run: |
+          node --check studio-html-js/app.js
+          node --check studio-html-js/odc.js
+          test -s studio-html-js/index.html
+      - name: Smoke PHP Studio endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -S 127.0.0.1:18088 -t studio-php/public >/tmp/odc-php-studio.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          sleep 1
+          curl -fsS http://127.0.0.1:18088/ | grep -q 'ODC Studio PHP'
+

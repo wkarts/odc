@@ -1,0 +1,3 @@
+ODC — Optical Data Container
+Arquivo de teste integrado ao container.
+Linha 3: compatibilidade entre PHP, Delphi, Rust, Node.js, C#/.NET, Go, TypeScript, Shell e PowerShell.

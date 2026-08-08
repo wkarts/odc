@@ -1,0 +1,7 @@
+{
+  "empresa_id": 1,
+  "filial_id": 1,
+  "registro_id": 123,
+  "origem": "test-vector",
+  "descricao": "TXT integrado ao ODC"
+}

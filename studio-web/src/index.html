@@ -1,0 +1,6 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ODC Studio Web</title><link rel="stylesheet" href="./style.css"></head><body>
+<main><h1>ODC Studio Web</h1><p>Crie, inspecione, valide, extraia e edite metadata localmente no navegador. Nenhum upload é realizado.</p>
+<section><h2>Criar ODC</h2><input id="src" type="file"><textarea id="meta" placeholder='{"empresa_id":1}'></textarea><label><input id="compress" type="checkbox" checked> compressão adaptativa</label><button id="create">Criar e baixar .odc</button></section>
+<section><h2>Abrir / validar / extrair</h2><input id="odc" type="file" accept=".odc"><button id="inspect">Inspecionar</button><button id="verify">Validar</button><button id="extract">Extrair original</button><pre id="info"></pre></section>
+<section><h2>Editar metadata</h2><textarea id="editmeta" placeholder="{}"></textarea><button id="saveMeta">Salvar metadata em novo .odc</button><button id="removeMeta">Remover metadata</button></section>
+</main><script type="module" src="./app.js"></script></body></html>

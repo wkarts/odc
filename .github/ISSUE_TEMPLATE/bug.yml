@@ -1,0 +1,16 @@
+name: Bug
+about: Relatar falha no ODC SDK/Studio
+body:
+  - type: textarea
+    id: problem
+    attributes: { label: Problema, description: Descreva o comportamento observado. }
+    validations: { required: true }
+  - type: dropdown
+    id: implementation
+    attributes:
+      label: Implementação
+      options: [PHP/Laravel, Delphi, Rust/Tauri, Node.js, .NET, Go, TypeScript/Web, Shell, PowerShell, Formato ODC]
+    validations: { required: true }
+  - type: textarea
+    id: reproduce
+    attributes: { label: Como reproduzir }

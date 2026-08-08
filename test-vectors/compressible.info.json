@@ -1,0 +1,67 @@
+{
+    "magic": "ODC1",
+    "version": "1.0",
+    "flags": 1,
+    "chunk_count": 7,
+    "file_name": "compressible.txt",
+    "mime_type": "text/plain",
+    "original_size": 2292000,
+    "stored_payload_size": 9432,
+    "compression": "gzip",
+    "sha256": "31fb40013d08ce99bf504338cb8bbee4d67cb713a648fd0c62b473da268e1d22",
+    "metadata": {
+        "tipo": "compressible-test",
+        "esperado": "gzip"
+    },
+    "chunks": [
+        {
+            "type": "0x0001",
+            "name": "FILE_NAME",
+            "flags": 0,
+            "length": 16,
+            "offset": 36
+        },
+        {
+            "type": "0x0002",
+            "name": "MIME_TYPE",
+            "flags": 0,
+            "length": 10,
+            "offset": 64
+        },
+        {
+            "type": "0x0003",
+            "name": "METADATA_JSON",
+            "flags": 0,
+            "length": 46,
+            "offset": 86
+        },
+        {
+            "type": "0x0004",
+            "name": "ORIGINAL_SIZE",
+            "flags": 0,
+            "length": 8,
+            "offset": 144
+        },
+        {
+            "type": "0x0010",
+            "name": "COMPRESSION",
+            "flags": 0,
+            "length": 1,
+            "offset": 164
+        },
+        {
+            "type": "0x0020",
+            "name": "SHA256",
+            "flags": 0,
+            "length": 32,
+            "offset": 177
+        },
+        {
+            "type": "0x0100",
+            "name": "PAYLOAD",
+            "flags": 0,
+            "length": 9432,
+            "offset": 221
+        }
+    ]
+}

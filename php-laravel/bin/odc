@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../src/OdcException.php';
+require_once __DIR__ . '/../src/OdcContainer.php';
+
+use Odc\OdcContainer;
+
+function usage(): never {
+    fwrite(STDERR, "Uso:\n  odc create <input> <output.odc> [metadata.json]\n  odc info <file.odc>\n  odc verify <file.odc>\n  odc extract <file.odc> <output>\n  odc set-meta <file.odc> <metadata.json>\n  odc remove-meta <file.odc>\n");
+    exit(2);
+}
+
+try {
+    $cmd = $argv[1] ?? null;
+    match ($cmd) {
+        'create' => (function () use ($argv): void {
+            if (count($argv) < 4) usage();
+            $meta = [];
+            if (isset($argv[4])) {
+                $meta = json_decode(file_get_contents($argv[4]), true, 512, JSON_THROW_ON_ERROR);
+            }
+            OdcContainer::createFromFile($argv[2], $argv[3], $meta);
+            echo "Criado: {$argv[3]}\n";
+        })(),
+        'info' => (function () use ($argv): void {
+            if (count($argv) < 3) usage();
+            echo json_encode(OdcContainer::info($argv[2]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+        })(),
+        'verify' => (function () use ($argv): void {
+            if (count($argv) < 3) usage();
+            $ok = OdcContainer::verify($argv[2]);
+            echo $ok ? "OK\n" : "INVALIDO\n";
+            if (!$ok) exit(1);
+        })(),
+        'extract' => (function () use ($argv): void {
+            if (count($argv) < 4) usage();
+            OdcContainer::extract($argv[2], $argv[3]);
+            echo "Extraído: {$argv[3]}\n";
+        })(),
+        'set-meta' => (function () use ($argv): void {
+            if (count($argv) < 4) usage();
+            $meta = json_decode(file_get_contents($argv[3]), true, 512, JSON_THROW_ON_ERROR);
+            OdcContainer::setMetadata($argv[2], $meta);
+            echo "Metadata atualizada.\n";
+        })(),
+        'remove-meta' => (function () use ($argv): void {
+            if (count($argv) < 3) usage();
+            OdcContainer::removeMetadata($argv[2]);
+            echo "Metadata removida.\n";
+        })(),
+        default => usage(),
+    };
+} catch (Throwable $e) {
+    fwrite(STDERR, 'ERRO: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}

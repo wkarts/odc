@@ -1,0 +1,36 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import zlib from 'node:zlib';
+
+export const C = {
+  MAGIC: Buffer.from('ODC1'), HEADER: 24, CH: 12,
+  FILE_NAME: 0x0001, MIME: 0x0002, META: 0x0003, ORIGINAL_SIZE: 0x0004,
+  COMPRESSION: 0x0010, SHA256: 0x0020, PAYLOAD: 0x0100,
+  NONE: 0, GZIP: 1
+};
+
+function u64(n){ const b=Buffer.alloc(8); b.writeBigUInt64LE(BigInt(n)); return b; }
+function readU64(b){ const n=b.readBigUInt64LE(0); if(n>BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('u64 excede Number.MAX_SAFE_INTEGER'); return Number(n); }
+function chunkHeader(type, flags, len){ const b=Buffer.alloc(C.CH); b.writeUInt16LE(type,0); b.writeUInt16LE(flags,2); b.writeBigUInt64LE(BigInt(len),4); return b; }
+function header(flags,count){ const b=Buffer.alloc(C.HEADER); C.MAGIC.copy(b,0); b.writeUInt16LE(1,4); b.writeUInt16LE(0,6); b.writeUInt32LE(flags,8); b.writeUInt32LE(C.HEADER,12); b.writeUInt32LE(count,16); return b; }
+function writeAll(fd,buf,pos=null){ let off=0; while(off<buf.length){ const n=fs.writeSync(fd,buf,off,buf.length-off,pos===null?null:pos+off); if(n<=0) throw new Error('falha de escrita'); off+=n; } }
+function writeChunk(fd,type,data,flags=0){ writeAll(fd,chunkHeader(type,flags,data.length)); writeAll(fd,data); }
+function mimeOf(p){ const ext=path.extname(p).toLowerCase(); return ({'.txt':'text/plain','.json':'application/json','.xml':'application/xml','.csv':'text/csv','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.pdf':'application/pdf','.zip':'application/zip'})[ext]||'application/octet-stream'; }
+function tryGzip(mime,size){ return size>=768 && (mime.startsWith('text/') || ['application/json','application/xml','application/javascript','application/sql','image/svg+xml'].includes(mime) || mime.endsWith('+json') || mime.endsWith('+xml')); }
+
+export function scan(file){ const st=fs.statSync(file); const fd=fs.openSync(file,'r'); try{ const h=Buffer.alloc(C.HEADER); if(fs.readSync(fd,h,0,h.length,0)!==h.length) throw new Error('ODC truncado'); if(!h.subarray(0,4).equals(C.MAGIC)) throw new Error('magic inválido'); const major=h.readUInt16LE(4), minor=h.readUInt16LE(6), flags=h.readUInt32LE(8), hs=h.readUInt32LE(12), count=h.readUInt32LE(16); if(major!==1||hs!==C.HEADER||count>1_000_000) throw new Error('header não suportado'); let pos=C.HEADER; const chunks=[]; for(let i=0;i<count;i++){ if(pos+C.CH>st.size) throw new Error('chunk truncado'); const ch=Buffer.alloc(C.CH); fs.readSync(fd,ch,0,C.CH,pos); const type=ch.readUInt16LE(0), cflags=ch.readUInt16LE(2), lenBig=ch.readBigUInt64LE(4); if(lenBig>BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('chunk grande demais'); const len=Number(lenBig), dataOffset=pos+C.CH; if(dataOffset+len>st.size) throw new Error('comprimento inválido'); chunks.push({type,flags:cflags,length:len,headerOffset:pos,dataOffset}); pos=dataOffset+len; }
+ return {header:{major,minor,flags,count},chunks}; } finally{fs.closeSync(fd);} }
+function index(chunks){ const m=new Map(); for(const c of chunks){ if(!m.has(c.type))m.set(c.type,[]); m.get(c.type).push(c);} return m; }
+function readSmall(file,idx,type,max,required=true){ const c=idx.get(type)?.[0]; if(!c){ if(required) throw new Error(`chunk ausente ${type}`); return null;} if(c.length>max) throw new Error('chunk acima do limite'); const fd=fs.openSync(file,'r'); try{ const b=Buffer.alloc(c.length); if(fs.readSync(fd,b,0,b.length,c.dataOffset)!==b.length) throw new Error('chunk truncado'); return b; } finally{fs.closeSync(fd);} }
+export function info(file){ const {header:hh,chunks}=scan(file), idx=index(chunks), p=idx.get(C.PAYLOAD)?.[0]; if(!p)throw new Error('PAYLOAD ausente'); const meta=readSmall(file,idx,C.META,16*1024*1024,false); return {magic:'ODC1',version:`${hh.major}.${hh.minor}`,flags:hh.flags,chunk_count:hh.count,file_name:readSmall(file,idx,C.FILE_NAME,1<<20).toString('utf8'),mime_type:readSmall(file,idx,C.MIME,1<<20).toString('utf8'),original_size:readU64(readSmall(file,idx,C.ORIGINAL_SIZE,8)),stored_payload_size:p.length,compression:readSmall(file,idx,C.COMPRESSION,1)[0]===1?'gzip':'none',sha256:readSmall(file,idx,C.SHA256,32).toString('hex'),metadata:meta?JSON.parse(meta.toString('utf8')):null,chunks:chunks.map(c=>({type:`0x${c.type.toString(16).padStart(4,'0').toUpperCase()}`,length:c.length,offset:c.dataOffset}))}; }
+
+export function create(input,output,metadata={},compress=true){ const raw=fs.readFileSync(input); const mime=mimeOf(input); const gz=(compress&&tryGzip(mime,raw.length))?zlib.gzipSync(raw,{level:6}):null; const use=!!gz && gz.length+64<raw.length; const payload=use?gz:raw, comp=use?1:0, sha=crypto.createHash('sha256').update(raw).digest(); const chunks=6+(Object.keys(metadata).length?1:0); const tmp=`${output}.tmp-${crypto.randomBytes(8).toString('hex')}`; fs.mkdirSync(path.dirname(output),{recursive:true}); const fd=fs.openSync(tmp,'w'); try{ writeAll(fd,header(comp?1:0,chunks)); writeChunk(fd,C.FILE_NAME,Buffer.from(path.basename(input))); writeChunk(fd,C.MIME,Buffer.from(mime)); if(Object.keys(metadata).length)writeChunk(fd,C.META,Buffer.from(JSON.stringify(metadata))); writeChunk(fd,C.ORIGINAL_SIZE,u64(raw.length)); writeChunk(fd,C.COMPRESSION,Buffer.from([comp])); writeChunk(fd,C.SHA256,sha); writeChunk(fd,C.PAYLOAD,payload); } finally{fs.closeSync(fd);} fs.renameSync(tmp,output); }
+
+export function extract(file,out){ const {chunks}=scan(file), idx=index(chunks), p=idx.get(C.PAYLOAD)?.[0]; if(!p)throw new Error('PAYLOAD ausente'); const fd=fs.openSync(file,'r'); let payload; try{ payload=Buffer.alloc(p.length); fs.readSync(fd,payload,0,p.length,p.dataOffset);} finally{fs.closeSync(fd);} const comp=readSmall(file,idx,C.COMPRESSION,1)[0]; const raw=comp===1?zlib.gunzipSync(payload):payload; const size=readU64(readSmall(file,idx,C.ORIGINAL_SIZE,8)); if(raw.length!==size)throw new Error('tamanho divergente'); const expected=readSmall(file,idx,C.SHA256,32); const actual=crypto.createHash('sha256').update(raw).digest(); if(!crypto.timingSafeEqual(expected,actual))throw new Error('SHA-256 inválido'); fs.mkdirSync(path.dirname(out),{recursive:true}); fs.writeFileSync(out,raw); }
+export function verify(file){ const tmp=path.join(os.tmpdir(),`odc-${crypto.randomBytes(8).toString('hex')}`); try{extract(file,tmp);return true;}catch{return false;}finally{try{fs.unlinkSync(tmp)}catch{}} }
+
+function rewriteMeta(file,metadataOrNull){ const {header:hh,chunks}=scan(file); const fdIn=fs.openSync(file,'r'); const tmp=`${file}.edit-${crypto.randomBytes(8).toString('hex')}`; const fdOut=fs.openSync(tmp,'w'); const kept=chunks.filter(c=>c.type!==C.META); const add=metadataOrNull!==null; try{writeAll(fdOut,header(hh.flags,kept.length+(add?1:0))); let inserted=false; for(const c of kept){ if(add&&!inserted&&c.type===C.ORIGINAL_SIZE){writeChunk(fdOut,C.META,Buffer.from(JSON.stringify(metadataOrNull)));inserted=true;} const total=C.CH+c.length, b=Buffer.alloc(total); fs.readSync(fdIn,b,0,total,c.headerOffset); writeAll(fdOut,b);} if(add&&!inserted)writeChunk(fdOut,C.META,Buffer.from(JSON.stringify(metadataOrNull))); } finally{fs.closeSync(fdIn);fs.closeSync(fdOut);} fs.renameSync(tmp,file); }
+export const setMetadata=(file,m)=>rewriteMeta(file,m);
+export const removeMetadata=(file)=>rewriteMeta(file,null);
