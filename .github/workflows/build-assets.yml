@@ -22,7 +22,7 @@ jobs:
   go:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: golang/go.mod
@@ -68,7 +68,7 @@ jobs:
           - { os: macos-15, target: aarch64-apple-darwin, label: macos-arm64, exe: odc }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: bash
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
@@ -101,7 +101,7 @@ jobs:
           - { os: macos-15, rid: osx-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
         with: { dotnet-version: '8.0.x' }
       - shell: bash
@@ -126,7 +126,7 @@ jobs:
           - { os: windows-11-arm, rid: win-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
         with: { dotnet-version: '8.0.x' }
       - shell: pwsh
@@ -145,7 +145,7 @@ jobs:
   powershell-studio:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: golang/go.mod
@@ -173,7 +173,7 @@ jobs:
   php:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: bash
         run: |
           VERSION="${ODC_VERSION:-$(cat VERSION)}"; mkdir -p dist/php
@@ -196,7 +196,7 @@ jobs:
   node-and-web:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with: { node-version: '22' }
       - shell: bash
@@ -217,7 +217,7 @@ jobs:
   shell-package:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: bash
         run: |
           VERSION="${ODC_VERSION:-$(cat VERSION)}"; mkdir -p dist/shell/pkg
@@ -244,7 +244,7 @@ jobs:
           - { os: macos-15, label: macos-arm64, exe: odc-studio-tauri }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Linux Tauri prerequisites
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
@@ -266,7 +266,7 @@ jobs:
     if: ${{ vars.ODC_DELPHI_ENABLED == 'true' }}
     runs-on: [self-hosted, Windows, X64, delphi]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: powershell
         run: |
           $version = if ($env:ODC_VERSION) {$env:ODC_VERSION} else {(Get-Content VERSION).Trim()}
@@ -287,7 +287,7 @@ jobs:
   source:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: sudo apt-get update && sudo apt-get install -y rsync zip
       - run: bash scripts/release/package-source.sh dist/source
       - uses: actions/upload-artifact@v7

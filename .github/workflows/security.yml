@@ -21,7 +21,7 @@ jobs:
           - { language: go, build_mode: manual }
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Toolchains precisam ser instalados antes do CodeQL init em build-mode manual.
       # No caso de Go, o init injeta o wrapper de tracing sobre o `go` já instalado.

@@ -16,7 +16,7 @@ jobs:
   contract:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: bash scripts/ci/check-version.sh
       - run: python3 scripts/ci/check-version-sync.py
       - run: bash scripts/ci/validate-tree.sh
@@ -28,7 +28,7 @@ jobs:
   php:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: PHP
         run: php -v
       - name: Lint
@@ -44,7 +44,7 @@ jobs:
   node:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with: { node-version: '22' }
       - run: node --check nodejs/src/odc.js
@@ -54,7 +54,7 @@ jobs:
   typescript:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with: { node-version: '22' }
       - working-directory: typescript
@@ -65,7 +65,7 @@ jobs:
   go:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: golang/go.mod
@@ -82,7 +82,7 @@ jobs:
   rust:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: rustup toolchain install stable --profile minimal --no-self-update
       - run: rustup component add rustfmt clippy
       - working-directory: rust-tauri
@@ -95,7 +95,7 @@ jobs:
   dotnet:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
         with: { dotnet-version: '8.0.x' }
       - run: dotnet build csharp-dotnet/Odc.Cli/Odc.Cli.csproj -c Release
@@ -105,14 +105,14 @@ jobs:
   shell:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: bash -n shell/odc.sh
       - run: bash shell/odc.sh info test-vectors/hello.odc >/tmp/odc-shell-info.txt
 
   powershell:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: powershell
         run: |
           $errors=$null; [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path powershell/Odc.Core.ps1),[ref]$null,[ref]$errors); if($errors){$errors|Out-String|Write-Error;exit 1}
@@ -123,7 +123,7 @@ jobs:
     needs: [php, node, go]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with: { node-version: '22' }
       - uses: actions/setup-go@v7
@@ -134,7 +134,7 @@ jobs:
   studios:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with: { node-version: '22' }
       - name: Validar Studio PHP

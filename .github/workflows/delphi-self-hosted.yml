@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: [self-hosted, Windows, X64, delphi]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - shell: powershell
         run: |
           $version=(Get-Content VERSION).Trim(); New-Item -ItemType Directory -Force dist\delphi\win32,dist\delphi\win64,dist\delphi\win32\dcu,dist\delphi\win64\dcu|Out-Null
