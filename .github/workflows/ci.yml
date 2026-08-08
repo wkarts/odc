@@ -21,7 +21,9 @@ jobs:
       - run: python3 scripts/ci/check-version-sync.py
       - run: bash scripts/ci/validate-tree.sh
       - name: Validar YAML dos workflows
-        run: ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |f| YAML.load_file(f); puts "OK #{f}" }'
+        shell: bash
+        run: |
+          ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].sort.each { |f| YAML.load_file(f); puts "OK #{f}" }'
 
   php:
     runs-on: ubuntu-24.04
@@ -74,7 +76,7 @@ jobs:
           git diff --exit-code
           go vet ./...
           go test ./...
-          go build ./cmd/odc
+          go build -o /tmp/odc-ci ./cmd/odc
       - run: go -C golang run ./cmd/odc verify ../test-vectors/hello.odc
 
   rust:

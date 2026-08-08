@@ -14,7 +14,7 @@ chunk_header(){ w16 "$1"; w16 0; w64 "$2"; }
 write_chunk_file(){ local t=$1 f=$2; local n; n=$(stat -c%s "$f"); chunk_header "$t" "$n"; cat "$f"; }
 write_chunk_text(){ local t=$1 s=$2 tmp; tmp=$(mktemp); printf '%s' "$s">"$tmp"; write_chunk_file "$t" "$tmp"; rm -f "$tmp"; }
 scan(){ local f=$1 count; [[ $(dd if="$f" bs=1 count=4 status=none) == "$MAGIC" ]]||return 1; count=$(rnum "$f" 16 4); local p=$HEADER; for((i=0;i<count;i++));do local t fl l; t=$(rnum "$f" "$p" 2); fl=$(rnum "$f" $((p+2)) 2); l=$(rnum "$f" $((p+4)) 8); echo "$t $fl $l $p $((p+CH))"; p=$((p+CH+l)); done; }
-find_chunk(){ scan "$1"|awk -v t="$2" '$1==t{print;exit}'; }
+find_chunk(){ scan "$1" | awk -v t="$2" '$1==t && !found {print; found=1} END {exit(found ? 0 : 1)}'; }
 read_text(){ local row=($(find_chunk "$1" "$2")); [[ ${#row[@]} -gt 0 ]]||return 1; dd if="$1" bs=1 skip="${row[4]}" count="${row[2]}" status=none; }
 create(){ local input=$1 out=$2 meta=${3:-}; local rawsize mime payload comp=0 gz sha count flags tmp; rawsize=$(stat -c%s "$input"); mime=$(file --brief --mime-type "$input"); payload="$input"; gz=$(mktemp); if [[ $rawsize -ge 768 && ( $mime == text/* || $mime == application/json || $mime == application/xml ) ]]; then gzip -c -6 "$input">"$gz"; if (( $(stat -c%s "$gz") + 64 < rawsize )); then payload="$gz";comp=1;fi; fi; count=6; [[ -n "$meta" ]]&&count=7; flags=$comp; sha=$(sha256sum "$input"|awk '{print $1}'); tmp="${out}.tmp.$$"; mkdir -p "$(dirname "$out")"; {
  printf 'ODC1'; w16 1; w16 0; w32 "$flags"; w32 24; w32 "$count"; w32 0;
