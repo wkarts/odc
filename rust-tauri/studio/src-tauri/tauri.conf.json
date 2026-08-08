@@ -9,10 +9,13 @@
   "app": {
     "windows": [
       {
-        "title": "ODC Studio Tauri",
-        "width": 980,
-        "height": 720,
-        "resizable": true
+        "title": "ODC Studio",
+        "width": 1180,
+        "height": 780,
+        "minWidth": 980,
+        "minHeight": 680,
+        "resizable": true,
+        "center": true
       }
     ],
     "security": {

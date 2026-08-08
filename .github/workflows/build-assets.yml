@@ -206,7 +206,7 @@ jobs:
           (cd typescript && npm install --no-audit --no-fund && npm run build && npm pack --pack-destination ../dist/js)
           (cd studio-web && npm install --no-audit --no-fund && npm run build)
           (cd studio-web/dist && zip -qr "../../dist/js/odc-studio-web-${VERSION}.zip" .)
-          (cd studio-html-js && npm run check && zip -qr "../dist/js/odc-studio-html-js-${VERSION}.zip" index.html app.js odc.js style.css README.md package.json)
+          (cd studio-html-js && npm run check && zip -qr "../dist/js/odc-studio-html-js-${VERSION}.zip" index.html app.js odc.js style.css assets README.md package.json)
       - uses: actions/upload-artifact@v7
         with:
           name: release-js-web

@@ -1,1 +1,1 @@
-fix/tauri-studio-icons-self-healing
+feat/professional-studios-and-tauri-ui
