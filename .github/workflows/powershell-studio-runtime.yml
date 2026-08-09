@@ -88,8 +88,17 @@ jobs:
             'dist/powershell/ODC-Studio-x64.exe',
             'dist/powershell/ODC-Studio-x86.exe'
           )) {
-            & $exe --self-test
-            if ($LASTEXITCODE -ne 0) {
-              throw "$exe falhou no self-test com exit code $LASTEXITCODE"
+            $resolved = (Resolve-Path $exe).Path
+            $process = Start-Process `
+              -FilePath $resolved `
+              -ArgumentList '--self-test' `
+              -Wait `
+              -PassThru `
+              -WindowStyle Hidden
+
+            if ($process.ExitCode -ne 0) {
+              throw "$exe falhou no self-test com exit code $($process.ExitCode)"
             }
+
+            Write-Host "$exe self-test aprovado."
           }
