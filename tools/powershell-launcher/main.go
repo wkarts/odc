@@ -24,8 +24,10 @@ var studio []byte
 
 const createNoWindow = 0x08000000
 
+var selfTestMode bool
+
 func main() {
-	selfTest := len(os.Args) > 1 && os.Args[1] == "--self-test"
+	selfTestMode = len(os.Args) > 1 && os.Args[1] == "--self-test"
 
 	dir, err := os.MkdirTemp("", "odc-studio-")
 	if err != nil {
@@ -63,7 +65,7 @@ func main() {
 		CreationFlags: createNoWindow,
 	}
 
-	if selfTest {
+	if selfTestMode {
 		cmd.Env = append(os.Environ(), "ODC_STUDIO_SELF_TEST=1")
 	}
 
@@ -77,7 +79,7 @@ func main() {
 		fail(err, stdout.String(), stderr.String())
 	}
 
-	if selfTest && !strings.Contains(stdout.String(), "ODC_STUDIO_SELF_TEST_OK") {
+	if selfTestMode && !strings.Contains(stdout.String(), "ODC_STUDIO_SELF_TEST_OK") {
 		fail(errors.New("self-test não retornou o marcador esperado"), stdout.String(), stderr.String())
 	}
 }
@@ -113,6 +115,12 @@ func findWindowsPowerShell() (string, error) {
 
 func fail(runErr error, stdout, stderr string) {
 	logPath := writeErrorLog(runErr, stdout, stderr)
+
+	// Em modo de self-test, nunca exibe MessageBox. Isso evita bloquear
+	// runners headless e garante que o CI receba apenas o ExitCode real.
+	if selfTestMode {
+		os.Exit(1)
+	}
 
 	message := "O ODC Studio PowerShell não pôde ser iniciado."
 	if text := strings.TrimSpace(stderr); text != "" {
