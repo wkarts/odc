@@ -1,0 +1,95 @@
+name: PowerShell Studio runtime
+
+on:
+  pull_request:
+    paths:
+      - 'powershell/**'
+      - 'tools/powershell-launcher/**'
+      - '.github/workflows/powershell-studio-runtime.yml'
+      - 'VERSION'
+  push:
+    branches: ['main']
+    paths:
+      - 'powershell/**'
+      - 'tools/powershell-launcher/**'
+      - '.github/workflows/powershell-studio-runtime.yml'
+      - 'VERSION'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: golang/go.mod
+          cache-dependency-path: golang/go.mod
+
+      - name: Validar parser Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in @('powershell\Odc.Core.ps1', 'powershell\ODC-Studio.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors -and $errors.Count -gt 0) {
+              $errors | Format-List * | Out-String | Write-Error
+              throw "Falha de parser em $file"
+            }
+          }
+
+      - name: Self-test do Studio em fonte
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:ODC_STUDIO_SELF_TEST = '1'
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+            -NoLogo -NoProfile -ExecutionPolicy Bypass -STA `
+            -File ".\powershell\ODC-Studio.ps1"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Self-test em fonte falhou com exit code $LASTEXITCODE"
+          }
+
+      - name: Preparar scripts embutidos
+        shell: pwsh
+        run: |
+          Copy-Item powershell/Odc.Core.ps1 tools/powershell-launcher/Odc.Core.ps1 -Force
+          Copy-Item powershell/ODC-Studio.ps1 tools/powershell-launcher/ODC-Studio.ps1 -Force
+
+      - name: Compilar executáveis GUI x64 e x86
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force dist/powershell | Out-Null
+          Push-Location tools/powershell-launcher
+          foreach ($target in @(@('amd64','x64'), @('386','x86'))) {
+            $env:GOOS = 'windows'
+            $env:GOARCH = $target[0]
+            go build -trimpath -ldflags "-s -w -H windowsgui" `
+              -o "../../dist/powershell/ODC-Studio-$($target[1]).exe" .
+          }
+          Pop-Location
+
+      - name: Executar self-test dos EXEs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($exe in @(
+            'dist/powershell/ODC-Studio-x64.exe',
+            'dist/powershell/ODC-Studio-x86.exe'
+          )) {
+            & $exe --self-test
+            if ($LASTEXITCODE -ne 0) {
+              throw "$exe falhou no self-test com exit code $LASTEXITCODE"
+            }
+          }
